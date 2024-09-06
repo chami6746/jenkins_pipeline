@@ -1,104 +1,76 @@
 pipeline {
     agent any
-
     environment {
         EMAIL_RECIPIENT = 'hasini.chameeliya@gmail.com'
     }
-
     stages {
         stage('Build') {
             steps {
-                script {
-                    // Description: Build the code using a build automation tool.
-                    // Tool: Maven
-                    echo 'Building the code...'
-                    sh 'mvn clean install'
-                }
+                echo 'Building the code...'
+                // Example: sh 'mvn clean install'
             }
         }
-
         stage('Unit and Integration Tests') {
             steps {
-                script {
-                    // Description: Run unit tests and integration tests.
-                    // Tool: JUnit for unit tests, and any integration test framework.
-                    echo 'Running unit and integration tests...'
-                    sh 'mvn test'
-                }
+                echo 'Running unit and integration tests...'
+                // Example: sh 'mvn test'
             }
         }
-
         stage('Code Analysis') {
             steps {
-                script {
-                    // Description: Analyze code to ensure industry standards.
-                    // Tool: SonarQube
-                    echo 'Performing code analysis...'
-                    sh 'mvn sonar:sonar'
-                }
+                echo 'Performing code analysis...'
+                // Example: sh 'sonar-scanner'
             }
         }
-
         stage('Security Scan') {
             steps {
-                script {
-                    // Description: Perform security scan on the code.
-                    // Tool: OWASP Dependency-Check
-                    echo 'Performing security scan...'
-                    sh 'dependency-check.sh'
-                }
+                echo 'Performing security scan...'
+                // Example: sh 'dependency-check.sh'
             }
         }
-
         stage('Deploy to Staging') {
             steps {
-                script {
-                    // Description: Deploy the application to a staging server.
-                    // Tool: AWS CLI
-                    echo 'Deploying to staging...'
-                    sh 'aws deploy push --application-name my-app --s3-location s3://my-bucket/my-app.zip'
-                }
+                echo 'Deploying to staging server...'
+                // Example: sh 'deploy.sh staging'
             }
         }
-
         stage('Integration Tests on Staging') {
             steps {
-                script {
-                    // Description: Run integration tests on the staging environment.
-                    // Tool: JUnit or any integration test framework.
-                    echo 'Running integration tests on staging...'
-                    sh 'mvn verify'
-                }
+                echo 'Running integration tests on staging...'
+                // Example: sh 'integration-tests.sh'
             }
         }
-
         stage('Deploy to Production') {
             steps {
-                script {
-                    // Description: Deploy the application to a production server.
-                    // Tool: AWS CLI
-                    echo 'Deploying to production...'
-                    sh 'aws deploy push --application-name my-app --s3-location s3://my-bucket/my-app.zip'
-                }
+                echo 'Deploying to production server...'
+                // Example: sh 'deploy.sh production'
             }
         }
     }
-
     post {
-        always {
-            // Send notifications
+        success {
             emailext (
                 to: "${EMAIL_RECIPIENT}",
-                subject: "Jenkins Pipeline ${currentBuild.currentResult}",
-                body: "The build ${currentBuild.fullDisplayName} has finished with status: ${currentBuild.currentResult}. Please find the build logs attached.",
+                subject: "SUCCESS: Build ${env.BUILD_NUMBER}",
+                body: "The build was successful. Check the build details at ${env.BUILD_URL}",
                 attachLog: true
             )
         }
-        success {
-            echo 'Pipeline succeeded!'
-        }
         failure {
-            echo 'Pipeline failed!'
+            emailext (
+                to: "${EMAIL_RECIPIENT}",
+                subject: "FAILURE: Build ${env.BUILD_NUMBER}",
+                body: "The build failed. Check the build details at ${env.BUILD_URL}",
+                attachLog: true
+            )
+        }
+        unstable {
+            emailext (
+                to: "${EMAIL_RECIPIENT}",
+                subject: "UNSTABLE: Build ${env.BUILD_NUMBER}",
+                body: "The build is unstable. Check the build details at ${env.BUILD_URL}",
+                attachLog: true
+            )
         }
     }
 }
