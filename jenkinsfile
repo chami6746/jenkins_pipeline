@@ -1,0 +1,104 @@
+pipeline {
+    agent any
+
+    environment {
+        EMAIL_RECIPIENT = 'hasini.chameeliya@gmail.com'
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    // Description: Build the code using a build automation tool.
+                    // Tool: Maven
+                    echo 'Building the code...'
+                    sh 'mvn clean install'
+                }
+            }
+        }
+
+        stage('Unit and Integration Tests') {
+            steps {
+                script {
+                    // Description: Run unit tests and integration tests.
+                    // Tool: JUnit for unit tests, and any integration test framework.
+                    echo 'Running unit and integration tests...'
+                    sh 'mvn test'
+                }
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                script {
+                    // Description: Analyze code to ensure industry standards.
+                    // Tool: SonarQube
+                    echo 'Performing code analysis...'
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                script {
+                    // Description: Perform security scan on the code.
+                    // Tool: OWASP Dependency-Check
+                    echo 'Performing security scan...'
+                    sh 'dependency-check.sh'
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            steps {
+                script {
+                    // Description: Deploy the application to a staging server.
+                    // Tool: AWS CLI
+                    echo 'Deploying to staging...'
+                    sh 'aws deploy push --application-name my-app --s3-location s3://my-bucket/my-app.zip'
+                }
+            }
+        }
+
+        stage('Integration Tests on Staging') {
+            steps {
+                script {
+                    // Description: Run integration tests on the staging environment.
+                    // Tool: JUnit or any integration test framework.
+                    echo 'Running integration tests on staging...'
+                    sh 'mvn verify'
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            steps {
+                script {
+                    // Description: Deploy the application to a production server.
+                    // Tool: AWS CLI
+                    echo 'Deploying to production...'
+                    sh 'aws deploy push --application-name my-app --s3-location s3://my-bucket/my-app.zip'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Send notifications
+            emailext (
+                to: "${EMAIL_RECIPIENT}",
+                subject: "Jenkins Pipeline ${currentBuild.currentResult}",
+                body: "The build ${currentBuild.fullDisplayName} has finished with status: ${currentBuild.currentResult}. Please find the build logs attached.",
+                attachLog: true
+            )
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
